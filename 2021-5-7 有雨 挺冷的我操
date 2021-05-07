@@ -1,0 +1,97 @@
+今天又是划水的一天
+中午起床，醒的时候大概是8点多，后来又睡过去了，到了11点多才醒，鸡儿梆硬，憋了一大泡尿，想去尿，但是又懒得起床，硬是赖到了11:30
+哎，本来想先做个午饭吃的，但是时间太晚了，来不及给肉化冻再做饭了，点了个外卖吃
+点完外卖之后看了一下微信，发现对象让我帮她抄一段代码，代码抄完之后外卖也送到了，随手打开平板看了一集红楼梦
+饭也吃完了，麻辣鸡丝拌面，真的难吃，而且点的时候忘记备注辣度了
+辣死我了
+去上班
+又是上坟般的社畜时光
+当然，正经的工作是不会做太多的，趁着领导不在，看会儿C++
+我是随便找了Github上一个人的教程看的，由于大学的时候稍微学过一点，所以就直接跳到了并发那一章去看
+https://downdemo.gitbook.io/cpp-concurrency-in-action-2ed/
+
+
+反正就是边看边搜嘛，不懂的地方就一顿google
+
+
+今天在看转移线程所有权的部分：https://downdemo.gitbook.io/cpp-concurrency-in-action-2ed/1.-xian-cheng-guan-li-managing-thread/zhuan-yi-xian-cheng-suo-you-quan
+这段代码：https://github.com/AGyfeihfkjsvihh/code/blob/main/1
+感觉有点感冒了，嗓子里一直有痰，我估计我明天就要感冒了，哎
+上面那段代码的第6行  template<typename T, typename... Ts>
+看不太懂，google之后，发现了这篇文章https://eli.thegreenplace.net/2014/variadic-templates-in-c/
+这里面有一个样例代码
+https://github.com/AGyfeihfkjsvihh/code/blob/main/2
+这个讲的就是不定长参数函数的用法
+上面template<typename T, typename... Ts>，就是声明了一个T模板和一个不定长参数模板Ts
+样例代码https://github.com/AGyfeihfkjsvihh/code/blob/main/2中有两个adder函数，第一个有一个参数就是模板T，第二个有两个参数，第一个参数是模板T变量，另一个就是不定长参数模板Args
+这里要注意的是，虽然第二个adder函数看起来好像是有两个参数，但是由于他的第二个参数是一个不定长参数，因此T adder(T first, Args... args)这个方法是可以这样调用的：adder(args...)
+也就是说只要参数中有一个是不定长参数，那么调用的时候，都可以使用adder(args...)这种形式进行调用
+另外一点就是，你看这个函数他好像是在递归调用他自己一样，但是实际上呢，他不是一个递归，因为每一次的调用，参数长度都会减1，最后只剩下一个参数的时候，就会调用到T adder(T v)这个函数，也就是说他最终调用了别的函数，因此严格来说他算不上递归
+我们可以通过在每一个函数的第一行加上std::cout << __PRETTY_FUNCTION__ << "\n";来观察
+如下代码：https://github.com/AGyfeihfkjsvihh/code/blob/main/3
+
+
+下午四点多吃了碗麻辣烫，现在下班回家有点饿了，随手点一个鸡腿+雪碧，美滋滋，不过这么晚了，怕没有骑手接单，哎
+
+
+继续往下看咯
+
+
+在继续往下看代码的时候又发现了问题
+
+
+我发现他这个类的构造函数（第7行），使用explicit显式声明，但是参数却是不定长参数，而且列表初始化使用了std::forward，这个std::forward是啥意思？
+打开qq音乐，放会儿轻音乐
+对象视频打进来，刚放了两秒的音乐，关掉
+哎，果然没有骑手接单，这他妈都过去10来分钟了
+搜了一下，又牵扯出了左值右值
+我曹，有骑手接单了，开心
+
+
+编程语言这种东西嘛，毕竟是国外的，查资料还是看英文的比较好，直接看文档嘛又看不太懂，最后找到了这一篇https://www.internalpointers.com/post/understanding-meaning-lvalues-and-rvalues-c
+读一下看看
+所谓左值右值，可以形象地比喻成容器和物品，左值就是容器，右值就是放在容器里的物体，从技术层面来说，左值就是内存中的一块空间，右值啥也不是
+int six = 666
+这个six就是左值，666就是右值
+我的感觉就是，左值就是一个变量或者一个引用
+而右值可以是字面量也可以是变量
+另外还有一个叫做隐式左值右值转换的概念
+int x = 1; int y =2; int z = x + y;
+我们知道+这个运算符需要两个rvalue来进行运算，然后返回一个rvalue，但是x和y明明是lvalue，这怎么可能编译通过呢
+其实这里+操作符对这两个lvalue进行了一个隐式的lvalue to rvalue的转换，不光+有这个功能，-、*、/都有这种特点
+有人可能会问，既然后lvalue to rvalue，那有没有rvalue to lvalue呢，答案是没有，这个转换是单向的，不能反过来转
+还有就是引用类型一定是要指向一个左值的，因为引用必须要指向一块空间，而左值就是这个意思
+所以，如果我们这样写：
+int& yref = 10;
+是无法通过编译的
+下面这种引用的用法才是正确的
+int y = 10; int& yref = y; yref++;
+
+
+不过也是有例外的，如果lvalue是一个常量const，那么const int& ref = 123;这种写法是可以正常编译的
+因为他保证了左值是不会改变的，其实上面那种写法最后会被编译器翻译成下面这样：
+// the following...
+const int& ref = 10;
+// ... would translate to:
+int __internal_unique_name = 10;
+const int& ref = __internal_unique_name;
+
+
+编译器创建了一个隐藏的中间变量__internal_unique_name，所以这种写法和之前那种正常的写法是一样的，只不过加了一个const
+
+
+这个左值右值看得差不多快明白了
+我又想到引用和指针到底有啥区别，所以又是一顿google
+https://www.educative.io/edpresso/differences-between-pointers-and-references-in-cpp
+指针是一个变量，是占内存空间的，里面存的是一个地址
+引用是变量的别名
+指针可以多次赋值，引用只能绑定一次：https://github.com/AGyfeihfkjsvihh/code/blob/main/4
+另外，引用的大小和内存地址是不可见的，在使用的时候，引用其实就是他所绑定的变量的别名
+
+
+好了，今天就先看到这了，上面看的这么多关于C++的一些基础文章中，个人感觉下下面这两个博主的文章质量最佳，讲的很细致，很容易让人明白
+https://www.internalpointers.com/post/c-rvalue-references-and-move-semantics-beginners
+https://eli.thegreenplace.net/2014/variadic-templates-in-c/
+
+
+上床睡觉，明天对象就来了，开心，嘿嘿嘿~
