@@ -153,7 +153,7 @@ Exchange Trusted Subsystem安全组以及Exchange Windows Permission的组成员
 
 
 昨天看了左值右值，今天看C++的move 语义
-今天看的这篇文章是关于右值引用和move语义
+今天看的这篇文章是关于右值引用和move语义：https://www.internalpointers.com/post/c-rvalue-references-and-move-semantics-beginners
 在C++中，右值的中心思想就是临时的，短命的值，这些值你是没有办法改变的
 
 
