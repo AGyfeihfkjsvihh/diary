@@ -1,1 +1,72 @@
+今天继续看C++的move语义
+https://www.internalpointers.com/post/c-rvalue-references-and-move-semantics-beginners
 
+首先看一下啥是拷贝构造函数：https://github.com/AGyfeihfkjsvihh/code/blob/main/6
+一个拷贝构造函数的实现如下
+Holder(const Holder& other)
+{
+  m_data = new int[other.m_size];  // (1)
+  std::copy(other.m_data, other.m_data + other.m_size, m_data);  // (2)
+  m_size = other.m_size;
+}
+
+接受一个参数，是一个对象的引用
+std::copy用于把other对象的m_data的内容拷贝到新对象的m_data中
+std::copy的三个参数分别为源数据的首地址，源数据的尾地址，目标数据的首地址
+这就不难理解了，源数据的首地址就是数组名，尾地址就是数组名+长度
+这样，就把other对象中的m_data中的内容完整地拷贝到了目标数据中
+
+下面我们再来看一下拷贝赋值构造函数的实现
+https://github.com/AGyfeihfkjsvihh/code/blob/main/7
+
+第一步，先检测了一下是不是自己，避免自己赋值给自己（类似于x=x的操作）
+既然我们要用新的对象来给旧的对象赋值，那么旧对象的数据就没有存在的必要了，可以先清除掉：delete[] m_data;
+剩下的代码就跟拷贝构造函数的内容差不多了，只不过多了一个返回值，返回的是一个Holder对象的引用
+
+下面我们来看一下下面这种场景
+Holder createHolder(int size)
+{
+  return Holder(size);
+}
+int main()
+{
+  Holder h = createHolder(1000);
+}
+
+createHolder这个方法，再加上下面的Holder h = createHolder(1000);，将会极其耗费性能
+因为Holder类会进行内存空间的分配操作，而调用createHolder函数会导致在运行的时候创建一个临时的Holder对象以用于返回给主函数
+而主函数中又进行了=操作，这样就相当于进行了两次Holder类的初始化操作，极其耗费性能
+
+这时候我们就可以使用move来优化性能
+
+通过右值引用我们就可以实现move语义
+我们会改进Holder类的写法，copy构造函数和赋值copy构造函数也会进行相应的更改，以便于从一个临时对象中将数据偷回来
+所谓偷数据，就是将数据的所有权转移到我们这里，那么我们如何才能对一个临时对象进行操作呢？
+答案就是右值引用
+要想使用moev语义，那么我们的类就要额外再实现两个方法
+move构造函数和move赋值构造函数
+
+一个典型的move构造函数的实现形式如下：
+Holder(Holder&& other)     // <-- rvalue reference in input
+{
+  m_data = other.m_data;   // (1)
+  m_size = other.m_size;
+  other.m_data = nullptr;  // (2)
+  other.m_size = 0;
+}
+刚才吃晚饭的时候看了一把RNG和UOL的比赛，UOL都被打爆了我去，20分钟结束比赛我丢
+然后收拾了一下东西，因为再过几天就要搬家了，收拾完之后，又玩了会儿手机，8:40来继续学习
+可以看到，已经没有了copy操作了，而是直接使用=操作符将变量转移到了this.m_data中，然后再将其设置为空，空指针和0
+int main()
+{
+  Holder h1(1000);                // regular constructor
+  Holder h2(h1);                  // copy constructor (lvalue in input)
+  Holder h3 = createHolder(2000); // move constructor (rvalue in input) (1) 
+
+  h2 = h3;                        // assignment operator (lvalue in input)
+  h2 = createHolder(500);         // move assignment operator (rvalue in input)
+}
+编译器知道什么时候使用copy构造函数，什么时候使用move构造函数
+他是根据参数的类型判断的，如果传过来的是一个lvalue，那么就使用copy构造函数
+如果传过来的参数是一个rvalue，那么就使用move构造函数
+对象喊我去洗漱了，明天有空测下这move语义可以节省多少时间
